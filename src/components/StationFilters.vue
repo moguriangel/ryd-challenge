@@ -17,14 +17,14 @@
           </option>
         </select>
     </div>
-    <div v-if="stationToShow" class="station-filters__section">
+    <div v-if="stationToShow && !apiErrorMessage" class="station-filters__section">
      <strong>Name:</strong> {{stationToShow.name }} <br>
      <strong>Brand:</strong> {{stationToShow.brand }} <br>
      <strong>Address:</strong> {{stationToShow.street }} {{stationToShow.houseNumber }}, {{stationToShow.postCode }} {{stationToShow.place }} <br>
      <strong>Distance:</strong> {{stationToShow.dist }} km<br>
      <strong>Price:</strong> {{stationToShow.price }}  €<br>
-
     </div>
+    <div v-else>{{apiErrorMessage}}</div>
   </div>
 </template>
 
@@ -105,19 +105,26 @@ export default defineComponent({
       type: fuelTypeVModel.value,
       apikey: '00000000-0000-0000-0000-000000000002'
     }
-    const fetchGasStations = async () => {
-      const response = await getGasStations(stationsParams)
-      const { data } = response
-      !data.ok
-        ? console.log('err')
-        : gasStations.value = data.stations
+    const apiErrorMessage = ref('')
 
+    const fetchGasStations = async () => {
+      apiErrorMessage.value = ''
+      try {
+        const response = await getGasStations(stationsParams)
+        const { data } = response
+        !data.ok
+          ? apiErrorMessage.value = data.message
+          : gasStations.value = data.stations
+      } catch (error) {
+        apiErrorMessage.value = 'Server error'
+      }
 
     }
     onMounted(() => {
       fetchGasStations()
     })
     return {
+      apiErrorMessage,
       fuelTypes,
       fuelTypeVModel,
       brands,
